@@ -14,14 +14,14 @@
 <title>index</title>
 <!-- write your code here -->
 <script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
-<script src="index.js?1620755043648"></script>
+<script src="index.js?1620757112028"></script>
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
 function init() {
 	canvas = document.getElementById("canvas");
 	anim_container = document.getElementById("animation_container");
 	dom_overlay_container = document.getElementById("dom_overlay_container");
-	var comp=AdobeAn.getComposition("D22E75CF64E68A4CADD8FB6270B2ECDF");
+	var comp=AdobeAn.getComposition("EBB9B4C1C3CBAF4AB611F17B66E94F3A");
 	var lib=comp.getLibrary();
 	var loader = new createjs.LoadQueue(false);
 	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
@@ -50,7 +50,7 @@ function handleComplete(evt,comp) {
 		createjs.Ticker.setFPS(lib.properties.fps);
 		createjs.Ticker.addEventListener("tick", stage)
 		stage.addEventListener("tick", handleTick)
-		function getProjectionMatrix(container, totalDepth) {
+		function getProjectionMatrix(totalDepth) {
 			var focalLength = 528.25;
 			var projectionCenter = { x : lib.properties.width/2, y : lib.properties.height/2 };
 			var scale = (totalDepth + focalLength)/focalLength;
@@ -66,51 +66,37 @@ function handleComplete(evt,comp) {
 			return projMat;
 		}
 		function handleTick(event) {
-			var cameraInstance = exportRoot.___camera___instance;
-			if(cameraInstance !== undefined && cameraInstance.pinToObject !== undefined)
-			{
-				cameraInstance.x = cameraInstance.pinToObject.x + cameraInstance.pinToObject.pinOffsetX;
-				cameraInstance.y = cameraInstance.pinToObject.y + cameraInstance.pinToObject.pinOffsetY;
-				if(cameraInstance.pinToObject.parent !== undefined && cameraInstance.pinToObject.parent.depth !== undefined)
-				cameraInstance.depth = cameraInstance.pinToObject.parent.depth + cameraInstance.pinToObject.pinOffsetZ;
-			}
-			applyLayerZDepth(exportRoot);
-		}
-		function applyLayerZDepth(parent)
-		{
-			var cameraInstance = parent.___camera___instance;
 			var focalLength = 528.25;
-			var projectionCenter = { 'x' : 0, 'y' : 0};
-			if(parent === exportRoot)
+			var cameraInstance = exportRoot.___camera___instance;
+		if(cameraInstance !== undefined && cameraInstance.pinToObject !== undefined)
+		{
+			cameraInstance.x = cameraInstance.pinToObject.x + cameraInstance.pinToObject.pinOffsetX;
+			cameraInstance.y = cameraInstance.pinToObject.y + cameraInstance.pinToObject.pinOffsetY;
+			if(cameraInstance.pinToObject.parent !== undefined && cameraInstance.pinToObject.parent.depth !== undefined)
+				cameraInstance.depth = cameraInstance.pinToObject.parent.depth + cameraInstance.pinToObject.pinOffsetZ;
+		}
+			for(child in exportRoot.children)
 			{
-				var stageCenter = { 'x' : lib.properties.width/2, 'y' : lib.properties.height/2 };
-				projectionCenter.x = stageCenter.x;
-				projectionCenter.y = stageCenter.y;
-			}
-			for(child in parent.children)
-			{
-				var layerObj = parent.children[child];
+				var layerObj = exportRoot.children[child];
 				if(layerObj == cameraInstance)
 					continue;
-				applyLayerZDepth(layerObj, cameraInstance);
-				if(layerObj.layerDepth === undefined)
-					continue;
-				if(layerObj.currentFrame != layerObj.parent.currentFrame)
-				{
-					layerObj.gotoAndPlay(layerObj.parent.currentFrame);
-				}
+					if(layerObj.currentFrame != layerObj.parent.currentFrame)
+					{
+						layerObj.gotoAndPlay(layerObj.parent.currentFrame);
+					}
 				var matToApply = new createjs.Matrix2D;
 				var cameraMat = new createjs.Matrix2D;
 				var totalDepth = layerObj.layerDepth ? layerObj.layerDepth : 0;
 				var cameraDepth = 0;
 				if(cameraInstance && !layerObj.isAttachedToCamera)
 				{
+					var stageCenter = { 'x' : lib.properties.width/2, 'y' : lib.properties.height/2 };
 					var mat = cameraInstance.getMatrix();
-					mat.tx -= projectionCenter.x;
-					mat.ty -= projectionCenter.y;
+					mat.tx -= stageCenter.x;
+					mat.ty -= stageCenter.y;
 					cameraMat = mat.invert();
-					cameraMat.prependTransform(projectionCenter.x, projectionCenter.y, 1, 1, 0, 0, 0, 0, 0);
-					cameraMat.appendTransform(-projectionCenter.x, -projectionCenter.y, 1, 1, 0, 0, 0, 0, 0);
+					cameraMat.prependTransform(stageCenter.x, stageCenter.y, 1, 1, 0, 0, 0, 0, 0);
+					cameraMat.appendTransform(-stageCenter.x, -stageCenter.y, 1, 1, 0, 0, 0, 0, 0);
 					if(cameraInstance.depth)
 						cameraDepth = cameraInstance.depth;
 				}
@@ -129,7 +115,7 @@ function handleComplete(evt,comp) {
 				{
 					if(layerObj.layerDepth)
 					{
-						var sizeLockedMat = getProjectionMatrix(parent, layerObj.layerDepth);
+						var sizeLockedMat = getProjectionMatrix(layerObj.layerDepth);
 						if(sizeLockedMat)
 						{
 							sizeLockedMat.invert();
@@ -137,7 +123,7 @@ function handleComplete(evt,comp) {
 						}
 					}
 					matToApply.prependMatrix(cameraMat);
-					var projMat = getProjectionMatrix(parent, totalDepth);
+					var projMat = getProjectionMatrix(totalDepth);
 					if(projMat)
 					{
 						matToApply.prependMatrix(projMat);
@@ -191,9 +177,9 @@ function handleComplete(evt,comp) {
 <!-- write your code here -->
 </head>
 <body onload="init();" style="margin:0px;">
-	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1280px; height:720px">
-		<canvas id="canvas" width="1280" height="720" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
-		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1280px; height:720px; position: absolute; left: 0px; top: 0px; display: block;">
+	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:550px; height:357px">
+		<canvas id="canvas" width="550" height="357" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:550px; height:357px; position: absolute; left: 0px; top: 0px; display: block;">
 		</div>
 	</div>
 </body>
